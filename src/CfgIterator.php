@@ -41,20 +41,19 @@ class CfgIterator
         $this->file = fopen($file, 'r');
     }
 
-    /**
-     * remove blank line and comments
-     *
+    /***
      * @return \Generator|void
      */
     public function parse(): ?\Generator
     {
         $blockData = [];
         $nameKey = '';
+        $blockName = '';
 
         while ($line = fgets($this->file)) {
             $line = trim($line);
 
-            if ($line == "" OR substr($line, 0, 1) == '#') {
+            if ($this->isUselessLine($line)) {
                 continue;
             }
 
@@ -66,19 +65,8 @@ class CfgIterator
                     continue;
                 }
 
-                preg_match("/(\w*)\s*([\w|!|:|,|-| |.|-]*)/", $line, $matched);
+                $this->blockData($line, $nameKey, $blockName, $blockData);
 
-                if (strpos($line, $nameKey) !== false) {
-                    $blockName = trim($matched[2]);
-                } else {
-                    $exploded = explode(',', $matched[2]);
-                    if (count($exploded) > 1) {
-                        array_map('trim', $exploded);
-                        $blockData[$matched[1]] = $exploded;
-                    } else {
-                        $blockData[$matched[1]] = trim($matched[2]);
-                    }
-                }
             } else {
                 yield [$blockName => $blockData];
                 $blockName = '';
@@ -86,6 +74,39 @@ class CfgIterator
                 $nameKey = '';
             }
         }
+    }
+
+    /**
+     * @param string $line
+     * @param string $nameKey
+     * @param string $blockName
+     * @param array  $blockData
+     */
+    protected function blockData(string $line, string $nameKey, string &$blockName, array &$blockData)
+    {
+        preg_match("/(\w*)\s*([\w|!|:|,|-| |.|-]*)/", $line, $matched);
+
+        if (strpos($line, $nameKey) !== false) {
+            $blockName = trim($matched[2]);
+        } else {
+            $exploded = explode(',', $matched[2]);
+            if (count($exploded) > 1) {
+                array_map('trim', $exploded);
+                $blockData[$matched[1]] = $exploded;
+            } else {
+                $blockData[$matched[1]] = trim($matched[2]);
+            }
+        }
+    }
+
+    /**
+     * @param string $line
+     *
+     * @return bool
+     */
+    protected function isUselessLine(string $line): bool
+    {
+        return $line == "" OR substr($line, 0, 1) == '#';
     }
 
 }
