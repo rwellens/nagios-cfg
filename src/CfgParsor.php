@@ -14,26 +14,53 @@ namespace NagiosCfg;
 class CfgParsor
 {
 
-
-    public function getService($file)
+    /**
+     * @param $file
+     *
+     * @return array
+     */
+    public function getFileData($file): array
     {
-
-        $path = realpath($file);
-
-        $iterator = new CfgIterator($path);
-
-        foreach($iterator->parse() as $v){
-
-            var_dump($v);
-
+        $data = [];
+        $iterator = new CfgIterator($file);
+        foreach ($iterator->parse() as $blockType => $block) {
+            foreach ($block as $blockName => $blockData) {
+                $data[$blockType][$blockName] = $blockData;
+            }
         }
 
-        die;
-
-
+        return $data;
     }
 
 
+    /**
+     * @param $data
+     *
+     * @return string
+     */
+    public function convertToDat($data): string
+    {
+        $space = '    ';
+        $str = '';
+
+        foreach ($data as $blockType => $block) {
+            foreach ($block as $blockName => $blockData) {
+                $str .= 'define ' . $blockType . "{" . PHP_EOL;
+                foreach ($blockData as $key => $value) {
+                    if (is_array($value)) {
+                        $value = implode(',', $value);
+                    }
+                    $str .= $space . $key . '  ' . $value . PHP_EOL;
+                }
+                $str .= '}' . PHP_EOL;
+                $str .= "
+";
+            }
+        }
+
+
+        return trim($str);
+    }
 
 
 }

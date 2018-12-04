@@ -17,13 +17,14 @@ class CfgIterator
     /**
      * @var array
      */
-    protected $typesName = [
+    public static $typesName = [
         'service'      => 'service_description',
         'host'         => 'host_name',
         'timeperiod'   => 'timeperiod_name',
         'contactgroup' => 'contactgroup_name',
         'contact'      => 'contact_name',
         'hostgroup'    => 'hostgroup_name',
+        'command'      => 'command_name',
     ];
 
     /**
@@ -49,6 +50,7 @@ class CfgIterator
         $blockData = [];
         $nameKey = '';
         $blockName = '';
+        $type = '';
 
         while ($line = fgets($this->file)) {
             $line = trim($line);
@@ -61,17 +63,18 @@ class CfgIterator
                 if (substr($line, 0, 6) == 'define') {
                     $type = trim(str_replace(['define', '.', '{'], '', $line));
 
-                    $nameKey = $this->typesName[$type];
+                    $nameKey = self::$typesName[$type];
                     continue;
                 }
 
                 $this->blockData($line, $nameKey, $blockName, $blockData);
 
             } else {
-                yield [$blockName => $blockData];
+                yield $type => [$blockName => $blockData];
                 $blockName = '';
                 $blockData = [];
                 $nameKey = '';
+                $type = '';
             }
         }
     }
@@ -84,18 +87,17 @@ class CfgIterator
      */
     protected function blockData(string $line, string $nameKey, string &$blockName, array &$blockData)
     {
-        preg_match("/(\w*)\s*([\w|!|:|,|-| |.|-]*)/", $line, $matched);
+        preg_match("/([\w|\-]*)\s*([\w|!|:|,|\-| |.|$|\/]*)/", $line, $matched);
 
         if (strpos($line, $nameKey) !== false) {
             $blockName = trim($matched[2]);
+        }
+
+        $exploded = explode(',', $matched[2]);
+        if (count($exploded) > 1) {
+            $blockData[$matched[1]] = array_map('trim', $exploded);;
         } else {
-            $exploded = explode(',', $matched[2]);
-            if (count($exploded) > 1) {
-                array_map('trim', $exploded);
-                $blockData[$matched[1]] = $exploded;
-            } else {
-                $blockData[$matched[1]] = trim($matched[2]);
-            }
+            $blockData[$matched[1]] = trim($matched[2]);
         }
     }
 
@@ -106,7 +108,9 @@ class CfgIterator
      */
     protected function isUselessLine(string $line): bool
     {
-        return $line == "" OR substr($line, 0, 1) == '#';
+        $firstChar = substr($line, 0, 1);
+
+        return $line == "" OR $firstChar == '#' OR $firstChar == ';';
     }
 
 }
