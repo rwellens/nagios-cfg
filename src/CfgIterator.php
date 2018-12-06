@@ -68,13 +68,10 @@ class CfgIterator
                 }
 
                 $this->blockData($line, $nameKey, $blockName, $blockData);
-
             } else {
                 yield $type => [$blockName => $blockData];
-                $blockName = '';
+                $blockName = $nameKey = $type = '';
                 $blockData = [];
-                $nameKey = '';
-                $type = '';
             }
         }
     }
@@ -89,14 +86,14 @@ class CfgIterator
     {
         preg_match("/([\w|\-]*)\s*([\w|!|:|,|\-| |.|$|\/]*)/", $line, $matched);
 
-        if (strpos($line, $nameKey) !== false) {
-            $blockName = trim($matched[2]);
-        }
-
         $exploded = explode(',', $matched[2]);
         if (count($exploded) > 1) {
-            $blockData[$matched[1]] = array_map('trim', $exploded);;
+            $blockData[$matched[1]] = array_map('trim', $exploded);
         } else {
+            if (strpos($line, $nameKey) !== false) {
+                $blockName = trim($matched[2]);
+            }
+
             $blockData[$matched[1]] = trim($matched[2]);
         }
     }
@@ -106,11 +103,10 @@ class CfgIterator
      *
      * @return bool
      */
-    protected function isUselessLine(string $line): bool
+    public function isUselessLine(string $line): bool
     {
         $firstChar = substr($line, 0, 1);
 
-        return $line == "" OR $firstChar == '#' OR $firstChar == ';';
+        return $line == "" or $firstChar == '#' or $firstChar == ';';
     }
-
 }
