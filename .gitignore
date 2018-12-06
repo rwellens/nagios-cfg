@@ -40,3 +40,4 @@ composer.phar
 
 samples
 test.php
+tests/coverage
