@@ -25,6 +25,7 @@ class CfgIterator
         'contact'      => 'contact_name',
         'hostgroup'    => 'hostgroup_name',
         'command'      => 'command_name',
+        'servicegroup' => 'servicegroup_name',
     ];
 
     /**
