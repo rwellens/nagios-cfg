@@ -64,7 +64,9 @@ class CfgIterator
                 if (substr($line, 0, 6) == 'define') {
                     $type = trim(str_replace(['define', '.', '{'], '', $line));
 
-                    $nameKey = self::$typesName[$type];
+                    if(isset(self::$typesName[$type])){
+                        $nameKey = self::$typesName[$type];
+                    }
                     continue;
                 }
 
@@ -91,7 +93,7 @@ class CfgIterator
         if (count($exploded) > 1) {
             $blockData[$matched[1]] = array_map('trim', $exploded);
         } else {
-            if (strpos($line, $nameKey) !== false) {
+            if (empty($blockName) && (strpos($line, 'name') !== false || strpos($line, $nameKey) !== false)) {
                 $blockName = trim($matched[2]);
             }
 
